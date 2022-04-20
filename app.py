@@ -25,16 +25,14 @@ class CLI:
         self._set_session(self.token)
         # self.menu()
 
-    def _set_session(self, token) -> None:
+    #----- Utility methods -----
+    def _set_session(self, token: str) -> None:
         self.headers = {'Authorization': f'Bearer {token}'}
         self.session.headers.update(self.headers)
 
-    def _set_url(self, endpoint) -> str:
+    def _set_url(self, endpoint: str) -> str:
         url = ''.join([self.url, endpoint])
         return url
-
-    def _change_group(self, group: str) -> str:
-        self.group = group
 
     def _get_token_for_group(self, group: str) -> str:
         # curl -u $user:$password -XPOST "https://artitestserver.jfrog.io/artifactory/api/security/token" -d "username=$user" -d "scope=member-of-groups:readers" > .tok3
@@ -47,42 +45,50 @@ class CLI:
         # r = self.session.post(url, auth=(self.user, self.password), data=self.data)
         return r.json()['access_token']
 
-    def system_ping(self) -> requests.Response:
+    #----- Menu options implementation -----
+    # 1
+    def _system_ping(self) -> requests.Response:
         # curl -H "Authorization: Bearer $Access_Token" https://artitestserver.jfrog.io/artifactory/api/system/ping
         endpoint = 'system/ping'
         url = self._set_url(endpoint)        
         r = self.session.get(url, headers=self.session.headers)
         return r
 
-    def system_version(self) -> str:
+    # 2
+    def _system_version(self) -> str:
         # curl -H "Authorization: Bearer $Access_Token" https://artitestserver.jfrog.io/artifactory/api/system/ping
         endpoint = 'system/version'
         url = self._set_url(endpoint)    
         r = self.session.get(url, headers=self.session.headers)
         return r.json()['version']
 
-    def display_menu(self) -> None:
+    # 9
+    def _change_group(self, group: str) -> str:
+        self.group = group
+
+    def _display_menu(self) -> None:
         menu_options = {
             1: "Ping",
-            2: "Artifactory version",
+            2: "Artifactory Version",
             3: "Create User",
             4: "Delete User",
             5: "Get Storage Info",
             6: "Create Repository",
             7: "Update Repository",
             8: "List Repositories",
-            9: f"Change user's group (current group: '{self.group}')",
-            10: "Exit",
-            11: "Print token"
+            9: f"Change Group (current group: '{self.group}')",
+            10: "Create Group",
+            11: "Exit",
+            12: "Print Token"
             }
 
-        for option in menu_options.keys():
+        for option in menu_options.keys():            
             print(option, "--", menu_options[option])
 
     def menu(self) -> None:
         while True:
             print()
-            self.display_menu()
+            self._display_menu()
 
             option = ''
             try:
@@ -92,11 +98,11 @@ class CLI:
     
             if option == 1:
                 # Ping
-                r = self.system_ping()
-                print(f"ping {(self.url).split('artifactory', 1)[0]} - {r.text}")
+                r = self._system_ping()
+                print(f"ping {(self.url).split('artifactory', 1)[0]} - Status: {r.text}")
             elif option == 2:
                 # Artifactory version
-                version = self.system_version()
+                version = self._system_version()
                 print(f"Artifactory version {version}")
             elif option == 3:
                 # Create User
@@ -122,9 +128,12 @@ class CLI:
                 self._change_group(group)
                 self.token = self._get_token_for_group(self.group) # set token for new group
             elif option == 10:
-                # Exit 
+                # Create Group
                 break
             elif option == 11:
+                # Exit 
+                break
+            elif option == 12:
                 # Print token
                 print(self.token) 
                 # break
