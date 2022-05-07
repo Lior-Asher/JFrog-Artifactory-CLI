@@ -29,7 +29,7 @@ class CLI:
         self.token = self._get_token_for_group(self.group)
         self.session = requests.Session()
         self._set_session(self.token)
-        # self.menu()
+        # self.menu()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
 
     def _user_credentials(self) -> None:
         # Get user credentials from the command line on script run
