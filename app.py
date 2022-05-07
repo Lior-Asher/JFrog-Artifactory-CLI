@@ -139,6 +139,11 @@ class CLI:
         r = self.session.put(url, headers=self.session.headers, json=json)
         return r.status_code
 
+    # 7
+    # TODO:
+    def _update_repo(self):
+        pass
+
     # 8
     def _list_repositories(self) -> json:
         # Returns a list of minimal repository details for all repositories of the specified type.
@@ -151,6 +156,11 @@ class CLI:
     # 9
     def _change_group(self, group: str) -> str:
         self.group = group
+
+    # 10
+    # TODO:
+    def _create_group(self):
+        pass
 
     def _display_menu(self) -> None:
         menu_options = {
@@ -220,6 +230,7 @@ class CLI:
                     print(e.args)
             elif option == 7:
                 # Update Repository
+                # TODO:
                 break
             elif option == 8:
                 # List Repositories
@@ -232,6 +243,7 @@ class CLI:
                 self.token = self._get_token_for_group(self.group) # set token for new group
             elif option == 10:
                 # Create Group
+                # TODO:
                 break
             elif option == 11:
                 # Exit 
@@ -239,11 +251,8 @@ class CLI:
             elif option == 12:
                 # Print token
                 print(self.token) 
-                # break
             else:
                 print("Invalid option, try again")
-
-            # print(selection)
 
 if __name__ == '__main__':
     # token = cli._get_token_for_group("readers")
