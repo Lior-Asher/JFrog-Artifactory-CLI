@@ -6,6 +6,9 @@ import argparse
 from secrets import USER, PASSWORD, SERVER
 
 # -------------------------------------------
+# https://www.jfrog.com/confluence/display/JFROG/REST+API
+# https://www.jfrog.com/confluence/display/JFROG/Artifactory+REST+API
+# 
 # Using my JFrog url,
 # not Artifactory server hostname and port
 # https://<Server Name>.jfrog.io/artifactory/
@@ -28,7 +31,7 @@ class CLI:
         self._set_session(self.token)
         # self.menu()
 
-    def _user_credentials(self):
+    def _user_credentials(self) -> None:
         # Get user credentials from the command line on script run
         parser = argparse.ArgumentParser(description='CLI for the JFrog REST API')
         parser.add_argument('-u', '--username', help="personal username to login to JFrog's REST API", required=True)
@@ -82,6 +85,9 @@ class CLI:
         username = input("Enter username: ")
         email = input("Enter email: ")
         password = input("Enter password: ")
+        if (username or email or password) is (None or ""):
+            raise ValueError("Missing one or more values (username, email, password)")
+            
         endpoint = f'security/users/{username}'
         url = self._set_url(endpoint)
         # email and password are mandatory, name is optional
@@ -98,28 +104,49 @@ class CLI:
         # Notes: Requires Artifactory Pro
         # Usage: DELETE /api/security/users/{userName}
         username = input("Enter username to delete: ")
+        if username == "" or username is None:
+            raise ValueError("Missing username")
         endpoint = f'security/users/{username}'
         url = self._set_url(endpoint)
-        msg = self.session.delete(url, headers=self.session.headers)
-        return msg
+        r = self.session.delete(url, headers=self.session.headers)
+        return r
 
     # 5
     def _get_storage_info(self) -> json:
         # Returns storage summary information regarding binaries, file store and repositories.
         # Usage: GET /api/storageinfo
-        endpoint = f'/storageinfo'
+        endpoint = f'storageinfo'
         url = self._set_url(endpoint)
         r = self.session.get(url, headers=self.session.headers)
         return r.json()
 
     # 6
-    def _create_repository(self):
+    def _create_repository(self) -> requests.status_codes:
+        # Notes: Requires Artifactory Pro
         # Creates a new repository in Artifactory with the provided configuration. Supported by local, remote, virtual and federated repositories. 
         # Usage: PUT /api/repositories/{repoKey}
-        endpoint = f'/repositories/{repoKey}'
+        repokey = input("Enter repository name: ")
+        if repokey == '' or repokey is None:
+            raise ValueError("repository name cannot be empty")
+
+        json = {
+            'rclass' : 'remote',
+            'url' : f'{self.url}',
+            'externalDependenciesEnabled': False # False (default, Applies to Docker repositories only)
+        }
+        endpoint = f'repositories/{repokey}'
         url = self._set_url(endpoint)
-        r = self.session.put(url, headers=self.session.headers)
-        pass
+        r = self.session.put(url, headers=self.session.headers, json=json)
+        return r.status_code
+
+    # 8
+    def _list_repositories(self) -> json:
+        # Returns a list of minimal repository details for all repositories of the specified type.
+        # Usage: GET /api/repositories[?type=repositoryType (local|remote|virtual|federated|distribution)]|
+        endpoint = 'repositories'
+        url = self._set_url(endpoint)
+        r = self.session.get(url, headers=self.session.headers)
+        return r.json()
 
     # 9
     def _change_group(self, group: str) -> str:
@@ -168,28 +195,36 @@ class CLI:
                 print(f"Artifactory version {version}")
             elif option == 3:
                 # Create User
-                status = self._create_user()
-                if status == 200:
+                status_code = self._create_user()
+                if status_code == 200:
                     print("User created successfully")
                 else:
                     print("User was not created, try again")
             elif option == 4:
                 # Delete User
-                msg = self._delete_user()
-                print(msg)
+                r = self._delete_user()
+                print(r)
             elif option == 5:
                 # Get Storage Info
                 info = self._get_storage_info()
                 print(info)
             elif option == 6:
                 # Create Repository
-                break
+                try:
+                    status_code = self._create_repository()
+                    if status_code == 200:
+                        print("Repository created successfully!")
+                    else:
+                        print(status_code)
+                except ValueError as e:
+                    print(e.args)
             elif option == 7:
                 # Update Repository
                 break
             elif option == 8:
                 # List Repositories
-                break
+                repos = self._list_repositories()
+                print(repos)
             elif option == 9:
                 # Change user's group name
                 group = input("Enter user's group name:")
