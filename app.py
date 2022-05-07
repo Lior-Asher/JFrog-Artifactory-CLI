@@ -3,7 +3,7 @@
 import json
 import requests
 import argparse
-from secrets import USER, PASSWORD, SERVER
+from secrets import SERVER
 
 # -------------------------------------------
 # https://www.jfrog.com/confluence/display/JFROG/REST+API
@@ -20,12 +20,12 @@ from secrets import USER, PASSWORD, SERVER
 
 class CLI:
     def __init__(self) -> None:        
-        self.username = USER # TODO: replace 'USER' with '' after testing
-        self.password = PASSWORD # TODO: replace 'PASSWORD' with '' after testing
+        self.username = ''
+        self.password = ''
         self.server = SERVER
         self.group = 'administrators'
         self.url = f'https://{self.server}.jfrog.io/artifactory/api/'
-        # self._user_credentials() # TODO: activate this method after testing
+        self._user_credentials() # TODO: activate this method after testing
         self.token = self._get_token_for_group(self.group)
         self.session = requests.Session()
         self._set_session(self.token)
