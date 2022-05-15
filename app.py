@@ -3,20 +3,21 @@
 import json
 import requests
 import argparse
+import getpass
+import re
 from secrets import SERVER
 
-# -------------------------------------------
-# https://www.jfrog.com/confluence/display/JFROG/REST+API
-# https://www.jfrog.com/confluence/display/JFROG/Artifactory+REST+API
-# 
-# Using my JFrog url,
-# not Artifactory server hostname and port
-# https://<Server Name>.jfrog.io/artifactory/
-# Example: 
-# 1) curl -H "X-JFrog-Art-Api:ABcdEF" -X PUT "https://<Server Name>.jfrog.io/artifactory//my/new/artifact/        directory/# file.txt" -T Desktop/myNewFile.txt
-#  2) curl -H "Authorization: Bearer <Token>" -X PUT "https://<Server Name>.jfrog.io/artifactory//my/new/artifact/directory/file.txt" -T Desktop/myNewFile.txt
-#
-# -------------------------------------------
+'''
+ https://www.jfrog.com/confluence/display/JFROG/REST+API
+ https://www.jfrog.com/confluence/display/JFROG/Artifactory+REST+API
+ 
+ Using my JFrog url,
+ not Artifactory server hostname and port
+ https://<Server Name>.jfrog.io/artifactory/
+ Example: 
+ 1) curl -H "X-JFrog-Art-Api:ABcdEF" -X PUT "https://<Server Name>.jfrog.io/artifactory//my/new/artifact/        directory/# file.txt" -T Desktop/myNewFile.txt
+ 2) curl -H "Authorization: Bearer <Token>" -X PUT "https://<Server Name>.jfrog.io/artifactory//my/new/artifact/directory/file.txt" -T Desktop/myNewFile.txt
+'''
 
 class CLI:
     def __init__(self) -> None:        
@@ -25,21 +26,20 @@ class CLI:
         self.server = SERVER
         self.group = 'administrators'
         self.url = f'https://{self.server}.jfrog.io/artifactory/api/'
-        self._user_credentials() # TODO: activate this method after testing
+        self._user_credentials()
         self.token = self._get_token_for_group(self.group)
         self.session = requests.Session()
-        self._set_session(self.token)
-        # self.menu()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
+        self._set_session(self.token)        
 
     def _user_credentials(self) -> None:
         # Get user credentials from the command line on script run
         parser = argparse.ArgumentParser(description='CLI for the JFrog REST API')
         parser.add_argument('-u', '--username', help="personal username to login to JFrog's REST API", required=True)
-        parser.add_argument('-p', '--password', help="personal password to login to JFrog's REST API", required=True)
+        #parser.add_argument('-p', '--password', help="personal password to login to JFrog's REST API", required=True)
         args = parser.parse_args()
         # args, unknown = parser.parse_known_args()
         self.username = args.username
-        self.password = args.password
+        self.password = getpass.getpass(prompt='Enter password: ')#args.password
 
     #----- Utility methods -----
     def _set_session(self, token: str) -> None:
@@ -78,6 +78,13 @@ class CLI:
         r = self.session.get(url, headers=self.session.headers)
         return r.json()['version']
 
+    def _is_valid_email(self, email) -> bool:
+        regex = r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+'
+        if re.fullmatch(regex, email):
+            return True
+
+        return False
+
     # 3
     def _create_user(self) -> requests.status_codes:
         # Notes: Requires Artifactory Pro
@@ -85,7 +92,7 @@ class CLI:
         username = input("Enter username: ")
         email = input("Enter email: ")
         password = input("Enter password: ")
-        if (username or email or password) is (None or ""):
+        if not all([username, email, password]):
             raise ValueError("Missing one or more values (username, email, password)")
             
         endpoint = f'security/users/{username}'
@@ -154,7 +161,7 @@ class CLI:
         return r.json()
 
     # 9
-    def _change_group(self, group: str) -> str:
+    def _change_group(self, group: str) -> None:
         self.group = group
 
     # 10
@@ -186,7 +193,7 @@ class CLI:
 
     def menu(self) -> None:
         while True:
-            print()
+            print() # for better menu readability
             self._display_menu()
 
             option = ''
@@ -231,6 +238,7 @@ class CLI:
             elif option == 7:
                 # Update Repository
                 # TODO:
+                print("Not implemented yet")
                 break
             elif option == 8:
                 # List Repositories
@@ -244,6 +252,7 @@ class CLI:
             elif option == 10:
                 # Create Group
                 # TODO:
+                print("Not implemented yet")
                 break
             elif option == 11:
                 # Exit 
@@ -254,9 +263,7 @@ class CLI:
             else:
                 print("Invalid option, try again")
 
-if __name__ == '__main__':
-    # token = cli._get_token_for_group("readers")
-    # print(token)
+if __name__ == '__main__':   
     cli = CLI()
     cli.menu()
     
